@@ -4,6 +4,7 @@
   const Q_DIVIDEND=4;   // Q5 配当・優待
   const Q_RULE=7;       // Q8 決まったルールやパターン
   const Q_TREND=8;      // Q9 これから伸びそうな業界
+  const Q_LOSSCUT=17;   // Q18 損をしても、すぐ切り替えられる（A）
   const Q_US=20;        // Q21 アメリカ株（タイプ判定には使わない）
   const Q_IPO=21;       // Q22 IPO（タイプ判定には使わない）
   const CLOSE=60;       // 「僅差」の目安：多い方の割合がこの値以下
@@ -31,7 +32,8 @@
     return {key,axis,axisMax,pa:100-pb,pb};
   }
 
-  // 結果画面に出す講義。一番上1つ（main）＋あわせて2つ＋興味に合わせた講義（アメリカ株・IPO）
+  // 結果画面に出す講義。一番上（main）は講義一覧、その次に実践コース2つまで＋興味に合わせた講義（アメリカ株・IPO）
+  // 実践コースはいきなりは難しいので、講義一覧で基礎を学んでから進む順にする（2026-10 オーナーの希望）
   // 返り値: [{id, tag, main}]。講義名・URLは index.html の COURSES にある
   function pickCourses(r, ans){
     const close=Math.max(r.pa,r.pb)<=CLOSE;
@@ -40,7 +42,7 @@
       main={id:"endo",tag:"まずはここから"};
       if(close||r.axis[1]>=0)subs.push({id:"apollo",tag:"企業の中身も気になるなら"});
       if(ans[Q_RULE]===-2)subs.push({id:"kenmo",tag:"ルールとデータで判断したいなら"});
-      fill=[{id:"lectures",tag:"あわせて"}];
+      fill=[];
     }else{
       if(ans[Q_DIVIDEND]===2)main={id:"ricky",tag:"配当・優待への関心が強いあなたに"};
       else if(ans[Q_TREND]===2)main={id:"takezou",tag:"これから伸びる業界に注目するあなたに"};
@@ -52,7 +54,9 @@
       if(r.axis[0]>=0.6*r.axisMax[0])subs.push({id:"hemu",tag:"割安な株をじっくり持ちたいなら"});
       fill=[{id:"ichikawa",tag:"チャートも組み合わせたいなら"},{id:"hemu",tag:"割安な株をじっくり持ちたいなら"}];
     }
-    const used=new Set([main.id]), out=[{...main,main:true}];
+    const list=r.key==="tech"?{id:"lectures",tag:"まずはここから"}:{id:"lecturesFund",tag:"まずはここから"};
+    if(main.tag==="まずはここから")main={...main,tag:"講義一覧のあとに"};
+    const used=new Set([list.id,main.id]), out=[{...list,main:true},{...main,main:false}];
     for(const c of [...subs,...fill]){
       if(out.length>=3)break;
       if(used.has(c.id))continue;
@@ -60,6 +64,27 @@
     }
     if(ans[Q_US]===2)out.push({id:"rironkabuo",tag:"アメリカ株で成果を出したいなら",main:false});
     if(ans[Q_IPO]===2)out.push({id:"tenbagger",tag:"IPOで成果を出したいなら",main:false});
+    return out;
+  }
+
+  // 結果画面に出すライブ講義（最大3本）。返り値: [{id, tag}]。名前・リンクは index.html の LIVES にある
+  // 2026-10 オーナーと合意した対象9シリーズ＋市川校長のオンライン授業から選ぶ
+  function pickLives(r, ans){
+    const close=Math.max(r.pa,r.pb)<=CLOSE;
+    const c=[];
+    if(r.key==="tech"){
+      c.push({id:"endoLive",tag:"テクニカルをライブで深める"});
+      if(close||r.axis[1]>=0)c.push({id:"apolloLive",tag:"チャートと相場観を両方みがく"});
+      if(ans[Q_LOSSCUT]===-2)c.push({id:"amemiya",tag:"売買のタイミングと損切りを学ぶ"});
+      if(close)c.push({id:"ichikawaOnline",tag:"両方の考え方を基礎から"});
+      c.push({id:"kojiro",tag:"チャート分析の本質を学ぶ"},{id:"uenoTech",tag:"第30回以降がテクニカル編"},{id:"hideya",tag:"大きく動いた相場を読み解く"});
+    }else{
+      if(ans[Q_TREND]===2)c.push({id:"takezouLive",tag:"注目セクターをライブで"});
+      if(close)c.push({id:"ichikawaOnline",tag:"両方の考え方を基礎から"});
+      c.push({id:"fujimoto",tag:"社長への取材から銘柄を学ぶ"},{id:"sakamoto",tag:"注目テーマと銘柄の探し方"},{id:"uenoFund",tag:"第1〜29回がファンダメンタルズ編"});
+    }
+    const used=new Set(), out=[];
+    for(const x of c){ if(out.length>=3)break; if(used.has(x.id))continue; used.add(x.id); out.push(x); }
     return out;
   }
 
@@ -77,11 +102,12 @@
     return {v:String(v), type:r.key, pa:r.pa, pb:r.pb, ans:ans.slice()};
   }
 
-  // 集計に送ってよい場所か。公開ページ（GitHub Pages）だけ送り、手元での確認（localhost・ファイル）では送らない
+  // 集計に送ってよい場所か。本番の公開ページ（https://t-hirata-netizen.github.io/gfs-style-check/）だけ送る
+  // 手元での確認（localhost・ファイル）や、試作版などの別のリポジトリ（/gfs-style-check-preview/ など）では送らない
   function collectAllowed(loc){
-    return loc.protocol==="https:" && /\.github\.io$/.test(loc.hostname);
+    return loc.protocol==="https:" && loc.hostname==="t-hirata-netizen.github.io" && /^\/gfs-style-check(\/|$)/.test(loc.pathname);
   }
 
-  const api={score,pickCourses,axisLean,buildRecord,collectAllowed};
+  const api={score,pickCourses,pickLives,axisLean,buildRecord,collectAllowed};
   if(typeof module==="object"&&module.exports)module.exports=api; else root.GFSScore=api;
 })(typeof globalThis!=="undefined"?globalThis:this);

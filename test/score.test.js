@@ -3,7 +3,7 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
-const {score,pickCourses,axisLean,buildRecord,collectAllowed}=require("../score.js");
+const {score,pickCourses,pickLives,axisLean,buildRecord,collectAllowed}=require("../score.js");
 const vm=require("node:vm");
 
 // 今の質問の並び（タイプ判定に使う20問）。Q13（番号12）は判断材料の軸
@@ -131,14 +131,16 @@ const AXES22=[...AXIS_OF,null,null];
 const pick=a=>pickCourses(score(a,AXES22),a);
 const ids=a=>pick(a).map(c=>c.id);
 
-test("テクニカル派：一番上は遠藤講師、あわせては埋まらなければ講義一覧", ()=>{
-  const c=pick(ans22(-2));
-  assert.equal(c[0].id,"endo"); assert.equal(c[0].main,true);
-  assert.deepEqual(ids(ans22(-1)),["endo","lectures"]);
+test("一番上は講義一覧（実践コースより先）。テクニカル派はテクニカル分析編、ファンダ派はファンダメンタルズ分析編", ()=>{
+  const t=pick(ans22(-2)), f=pick(ans22(1));
+  assert.equal(t[0].id,"lectures"); assert.equal(t[0].main,true);
+  assert.equal(f[0].id,"lecturesFund"); assert.equal(f[0].main,true);
+  assert.deepEqual(ids(ans22(-1)),["lectures","endo"]);
+  assert.equal(t[1].tag,"講義一覧のあとに");
 });
 
 test("テクニカル派：Q8に「Aにとても近い」→ Kenmo講師", ()=>{
-  assert.deepEqual(ids(ans22(-1,{7:-2})),["endo","kenmo","lectures"]);
+  assert.deepEqual(ids(ans22(-1,{7:-2})),["lectures","endo","kenmo"]);
 });
 
 test("テクニカル派：僅差（60%以下）か判断材料がファンダ寄り → アポロ講師", ()=>{
@@ -146,34 +148,34 @@ test("テクニカル派：僅差（60%以下）か判断材料がファンダ�
   const a=ans22(-2,{5:1,6:1,7:1,8:1,9:1});
   const r=score(a,AXES22);
   assert.equal(r.key,"tech"); assert.ok(r.axis[1]>0);
-  assert.deepEqual(ids(a).slice(0,2),["endo","apollo"]);
+  assert.deepEqual(ids(a).slice(0,3),["lectures","endo","apollo"]);
   // 僅差：テクニカル55%前後
   const b=AXIS_OF.map((_,i)=>i<11?-1:1); b.push(-1,-1);
   const rb=score(b,AXES22); assert.equal(rb.key,"tech"); assert.ok(rb.pa<=60);
   assert.ok(ids(b).includes("apollo"));
 });
 
-test("ファンダ派：はっきりファンダ → 一番上はヘム講師", ()=>{
+test("ファンダ派：はっきりファンダ → 講義一覧の次はヘム講師", ()=>{
   const c=pick(ans22(1));
-  assert.equal(c[0].id,"hemu"); assert.equal(c[0].main,true);
+  assert.equal(c[1].id,"hemu"); assert.equal(c[1].main,false);
   assert.equal(c.length,3);
 });
 
-test("ファンダ派：Q5に「Bにとても近い」→ リッキー講師が一番上（仕様5）", ()=>{
+test("ファンダ派：Q5に「Bにとても近い」→ 実践コースの一番目はリッキー講師（仕様5）", ()=>{
   const c=pick(ans22(2));
-  assert.equal(c[0].id,"ricky");
+  assert.equal(c[1].id,"ricky");
 });
 
-test("ファンダ派：Q9に「Bにとても近い」→ たけぞう講師が一番上。配当と両方ならリッキー講師が上", ()=>{
-  assert.equal(pick(ans22(1,{8:2}))[0].id,"takezou");
+test("ファンダ派：Q9に「Bにとても近い」→ 実践コースの一番目はたけぞう講師。配当と両方ならリッキー講師が先", ()=>{
+  assert.equal(pick(ans22(1,{8:2}))[1].id,"takezou");
   const both=ids(ans22(1,{4:2,8:2}));
-  assert.equal(both[0],"ricky"); assert.equal(both[1],"takezou");
+  assert.equal(both[1],"ricky"); assert.equal(both[2],"takezou");
 });
 
-test("ファンダ派：僅差（60%以下）→ 市川校長が一番上", ()=>{
+test("ファンダ派：僅差（60%以下）→ 実践コースの一番目は市川校長", ()=>{
   const a=AXIS_OF.map((_,i)=>i<11?1:-1); a.push(-1,-1);
   const r=score(a,AXES22); assert.equal(r.key,"fund"); assert.ok(r.pb<=60);
-  assert.equal(pick(a)[0].id,"ichikawa");
+  assert.equal(pick(a)[1].id,"ichikawa");
 });
 
 test("ファンダ派：Q5に「Bにやや近い」→ あわせてにリッキー講師", ()=>{
@@ -199,13 +201,14 @@ test("講義の並び：一番上は1つだけ、同じ講義は2回出ない、
     assert.equal(new Set(c.map(x=>x.id)).size,c.length);
     const extra=c.filter(x=>x.id==="rironkabuo"||x.id==="tenbagger").length;
     assert.ok(c.length-extra>=2 && c.length-extra<=3);
+    assert.ok(c[0].id==="lectures"||c[0].id==="lecturesFund"); // いつも講義一覧が先
     for(const x of c)assert.ok(x.tag.length>0);
   }
 });
 
 test("講義のURLは gfs.tokyo のページで、個人識別用のパラメータを含まない", ()=>{
   const urls=[...HTML.matchAll(/url:"([^"]*)"/g)].map(m=>m[1]);
-  assert.equal(urls.length,10);
+  assert.equal(urls.length,11);
   for(const u of urls){
     assert.match(u,/^https:\/\/gfs\.tokyo\//);
     assert.doesNotMatch(u,/[?&#]/); // lmclid などを入れない（このリポジトリは Public）
@@ -216,9 +219,10 @@ test("講義のURLは gfs.tokyo のページで、個人識別用のパラメー
 test("score.js が使う講義IDが、すべて index.html の COURSES にある", ()=>{
   const block=HTML.slice(HTML.indexOf("const COURSES={"),HTML.indexOf("};",HTML.indexOf("const COURSES={")));
   const defined=new Set([...block.matchAll(/^ (\w+):\s*\{/gm)].map(m=>m[1]));
-  const src=fs.readFileSync(path.join(__dirname,"..","score.js"),"utf8");
+  const all=fs.readFileSync(path.join(__dirname,"..","score.js"),"utf8");
+  const src=all.slice(all.indexOf("function pickCourses("),all.indexOf("function pickLives(")); // 講師の講義だけ（ライブ講義は別のテスト）
   const used=new Set([...src.matchAll(/id:"(\w+)"/g)].map(m=>m[1]));
-  assert.equal(defined.size,10);
+  assert.equal(defined.size,11);
   for(const id of used)assert.ok(defined.has(id),id);
 });
 
@@ -232,7 +236,7 @@ test("軸の寄り具合：2割未満は「どちらとも」、6割以上は「
 });
 
 // ---- LINE などで URL を送ったときの画像 ----
-const BASE="https://t-hirata-netizen.github.io/gfs-style-check/";
+const BASE="https://t-hirata-netizen.github.io/gfs-style-check-preview/"; // 試作版のURL
 const pngSize=f=>{const b=fs.readFileSync(f); assert.equal(b.toString("ascii",1,4),"PNG"); return [b.readUInt32BE(16),b.readUInt32BE(20)]};
 
 test("LINE などで URL を送ったときの画像（og/default.png）は 1200×630", ()=>{
@@ -286,11 +290,16 @@ test("集計に送る1件：タイプ・割合・22問の回答・版だけで�
   ans[0]=-2; assert.equal(rec.ans[0],1); // 元の配列を後から変えても影響しない
 });
 
-test("集計は公開ページ（https の github.io）だけで送り、手元の確認では送らない", ()=>{
-  assert.equal(collectAllowed({protocol:"https:",hostname:"t-hirata-netizen.github.io"}),true);
-  assert.equal(collectAllowed({protocol:"http:",hostname:"localhost"}),false);
-  assert.equal(collectAllowed({protocol:"file:",hostname:""}),false);
-  assert.equal(collectAllowed({protocol:"https:",hostname:"github.io.example.com"}),false);
+test("集計は本番の公開ページだけで送り、手元の確認や試作版では送らない", ()=>{
+  const at=(protocol,hostname,pathname)=>collectAllowed({protocol,hostname,pathname});
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/index.html"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check-preview/"),false); // 試作版
+  assert.equal(at("https:","someone-else.github.io","/gfs-style-check/"),false);
+  assert.equal(at("http:","localhost","/"),false);
+  assert.equal(at("file:","","/Users/x/index.html"),false);
+  assert.equal(at("https:","github.io.example.com","/gfs-style-check/"),false);
 });
 
 test("Apps Script の質問数は index.html と同じ", ()=>{
@@ -325,4 +334,65 @@ test("「結果をコピー」の文に講義名を入れない（専任コン�
   const a=HTML.indexOf("const lines=["), b=HTML.indexOf('$("copyText").value',a);
   const block=HTML.slice(a,b);
   assert.doesNotMatch(block,/次に見る講義|あわせて|courses/);
+});
+
+test("閉じるボタン：質問画面の×と結果画面の「閉じる」は閉じるだけで、ほかのページに移らない", ()=>{
+  assert.match(HTML,/id="btnX"[^>]*aria-label="[^"]+"/);
+  assert.match(HTML,/id="btnClose">閉じる</);
+  const f=HTML.slice(HTML.indexOf("function closeApp(){"),HTML.indexOf("$(\"btnX\").onclick"));
+  assert.match(f,/window\.close\(\)/);
+  assert.doesNotMatch(f,/location\.href|history\.back|EXIT_URL/); // 閉じられなくても移動しない
+  assert.match(HTML,/id="closeNote"[^>]*role="status"/);           // 閉じられないときの案内
+  assert.match(HTML,/\$\("btnX"\)\.hidden=id!=="quiz"/); // ×は質問画面だけ
+});
+
+// ---- ライブ講義 ----
+const lives=a=>pickLives(score(a,AXES22),a).map(x=>x.id);
+
+test("ライブ講義：最大3本、重複なし、どれも index.html の LIVES にある", ()=>{
+  const block=HTML.slice(HTML.indexOf("const LIVES={"),HTML.indexOf("};",HTML.indexOf("const LIVES={")));
+  const defined=new Set([...block.matchAll(/^ (\w+):\s*\{/gm)].map(m=>m[1]));
+  assert.equal(defined.size,11);
+  const rnd=rng(21);
+  for(let n=0;n<3000;n++){
+    const a=AXES22.map(()=>[-2,-1,1,2][Math.floor(rnd()*4)]);
+    const c=pickLives(score(a,AXES22),a);
+    assert.ok(c.length>=1&&c.length<=3);
+    assert.equal(new Set(c.map(x=>x.id)).size,c.length);
+    for(const x of c){assert.ok(defined.has(x.id),x.id); assert.ok(x.tag.length>0);}
+  }
+});
+
+test("ライブ講義：テクニカル派は遠藤講師が一番上、ファンダ派は藤本講師が入る", ()=>{
+  assert.equal(lives(ans22(-1))[0],"endoLive");
+  assert.ok(lives(ans22(1)).includes("fujimoto"));
+});
+
+test("ライブ講義：僅差なら市川校長のオンライン授業、Q9を強く選んだファンダ派はたけぞう講師", ()=>{
+  const a=AXIS_OF.map((_,i)=>i<11?1:-1); a.push(-1,-1);
+  assert.ok(Math.max(score(a,AXES22).pa,score(a,AXES22).pb)<=60);
+  assert.ok(lives(a).includes("ichikawaOnline"));
+  assert.equal(lives(ans22(1,{8:2}))[0],"takezouLive");
+});
+
+test("ライブ講義：Q18を強く選んだテクニカル派は雨宮講師が入る", ()=>{
+  assert.ok(lives(ans22(-1,{17:-2})).includes("amemiya"));
+  assert.ok(!lives(ans22(-1,{17:-1})).includes("amemiya"));
+});
+
+test("ライブ講義のリンクは gfs.tokyo のページで、個人識別用のパラメータを含まない", ()=>{
+  const hrefs=[...HTML.matchAll(/href:"([^"]*)"/g)].map(m=>m[1]);
+  assert.equal(hrefs.length,11);
+  for(const h of hrefs){ assert.match(h,/^https:\/\/gfs\.tokyo\//); assert.doesNotMatch(h,/lmclid/); }
+  // 対象外にしたシリーズ（堀・DAIBOUCHOU・上岡・藤本トップインタビュー・配信オンライン授業・市川校長の経営者対談）は入れない
+  for(const id of [126,125,130,123,120,189])assert.ok(!hrefs.some(h=>h.endsWith("child_id="+id)),String(id));
+});
+
+test("Q18 は「損をしてもすぐ切り替える」の質問（ライブ講義の条件に使っている）", ()=>{
+  assert.match(Q_ROWS[17].a,/損をしても/);
+});
+
+test("score.js は中身に合った記号付きで読み込む（古いファイルがブラウザに残らないように）", ()=>{
+  const h=require("node:crypto").createHash("sha1").update(fs.readFileSync(path.join(__dirname,"..","score.js"))).digest("hex").slice(0,8);
+  assert.ok(HTML.includes(`<script src="score.js?v=${h}"></script>`),`index.html の score.js?v= を ${h} に変えてください`);
 });
