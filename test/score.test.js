@@ -396,3 +396,16 @@ test("score.js は中身に合った記号付きで読み込む（古いファ�
   const h=require("node:crypto").createHash("sha1").update(fs.readFileSync(path.join(__dirname,"..","score.js"))).digest("hex").slice(0,8);
   assert.ok(HTML.includes(`<script src="score.js?v=${h}"></script>`),`index.html の score.js?v= を ${h} に変えてください`);
 });
+
+test("結果画面：必修講義の復習（テクニカル分析・ファンダメンタルズ分析）があり、ほかの講義は「必修講義を修了した方向け」と書いてある", ()=>{
+  assert.match(HTML,/<h2>必修講義で復習しよう<\/h2>/);
+  assert.ok(HTML.includes('nm:"必修講義「テクニカル分析」'));
+  assert.ok(HTML.includes('nm:"必修講義「ファンダメンタルズ分析」'));
+  const links=[...HTML.matchAll(/link:"([^"]*)"/g)].map(m=>m[1]);
+  assert.equal(links.length,2);
+  for(const l of links)assert.equal(l,"https://gfs.tokyo/compulsory/mypage/");
+  assert.match(HTML,/次に見る講義<span class="h2sub">必修講義を修了した方向け<\/span>/);
+  assert.match(HTML,/あわせて見たいライブ講義<span class="h2sub">必修講義を修了した方向け<\/span>/);
+  // 「必修講義で復習しよう」は「次に見る講義」より前
+  assert.ok(HTML.indexOf("<h2>必修講義で復習しよう</h2>")<HTML.indexOf("次に見る講義<span"));
+});
