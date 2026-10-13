@@ -290,13 +290,14 @@ test("集計に送る1件：タイプ・割合・22問の回答・版だけで�
   ans[0]=-2; assert.equal(rec.ans[0],1); // 元の配列を後から変えても影響しない
 });
 
-test("集計は本番の公開ページだけで送り、手元の確認や試作版では送らない", ()=>{
+test("集計は本番（gfs-kabu-shindan）の公開ページだけで送り、手元の確認やほかのURLでは送らない", ()=>{
   const at=(protocol,hostname,pathname)=>collectAllowed({protocol,hostname,pathname});
-  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/"),true);
-  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/index.html"),true);
-  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check"),true);
-  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/"),false); // 試作版
-  assert.equal(at("https:","someone-else.github.io","/gfs-style-check/"),false);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/index.html"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan"),true);
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/"),false);       // 旧本番（新しい本番へ移るだけ）
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan-test/"),false);
+  assert.equal(at("https:","someone-else.github.io","/gfs-kabu-shindan/"),false);
   assert.equal(at("http:","localhost","/"),false);
   assert.equal(at("file:","","/Users/x/index.html"),false);
   assert.equal(at("https:","github.io.example.com","/gfs-style-check/"),false);

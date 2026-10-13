@@ -5,18 +5,19 @@
 
 ---
 
-## 0. このブランチ（chara）について
+## 0. このブランチ（chara）が本番
 
-GFS 公式キャラクター（かぶのキャラクター2体）を入れた**試作版**。本番（main）とは別に、`~/gfs-style-check-chara` で作業している（git worktree）。
-**本番（`gfs-style-check` の main）には入れない。** 部署の人（リモートの人を含む）に見てもらうため、別のリポジトリ `gfs-kabu-shindan` で公開する（2026-10-06 オーナー判断。URL：https://t-hirata-netizen.github.io/gfs-kabu-shindan/ ）。キャラクター使用の社内確認はまだなので、検索結果に出さない設定（noindex）は外さない。
-- 公開のしかた：このフォルダで commit し、`git push preview chara:main`（`preview` は試作版リポジトリの送り先）
-- 試作版からは集計に送らない（`collectAllowed()` が本番のURLだけを許可している）。og:url・og:image は試作版のURL
+**2026-10-13 から、このキャラクター入りの版が本番**（オーナー判断）。公開URL：**https://t-hirata-netizen.github.io/gfs-kabu-shindan/**
+- 作業場所は `~/gfs-style-check-chara`（git worktree、ブランチ `chara`）。公開は `git push kabu chara:main`（送り先 `kabu` ＝ リポジトリ `t-hirata-netizen/gfs-kabu-shindan`）。**push ＝ 本番公開**なので、push の前に変更内容をオーナーに見せて OK をもらう
+- 旧本番 `https://t-hirata-netizen.github.io/gfs-style-check/`（リポジトリ `gfs-style-check` の main、`~/gfs-style-check`）は、開くと新しい本番へ移るだけのページ。URL の `?…` と `#…` も引き継ぐ
+- 集計は新しい本番の URL からだけ送る（`collectAllowed()`）。旧本番の localStorage（途中の回答・前回の結果）は同じ `t-hirata-netizen.github.io` の中なので、そのまま引き継がれる
+- キャラクター使用の社内確認：オーナーの判断で本番にした。指摘があれば、そのつど直す。検索結果に出さない設定（noindex）は残す
 
 - 画像：`img/kabu-tech.webp`（黒いリュック）・`img/kabu-fund.webp`（赤いランドセル）。360px・各約21KB、背景透明。共有画像用の大きめの PNG は `og/src/kabu-*.png`
 - 入れた場所：スタート画面のヘッダー右上（2体）／質問画面の進捗バーの上を2体が歩く／結果画面のタイプ名の上（タイプごとに1体）／LINE などで URL を送ったときの画像（`og/default.png`）
 - タイプとの組み合わせは仮：黒いリュック＝チャートハンター型、赤いランドセル＝企業ウォッチャー型（キャラクターの公式設定が分かったら見直す）
 - 飾りなので `alt=""`・`aria-hidden` にして読み上げない。動きは `prefers-reduced-motion` で止まる
-- Magic UI（https://magicui.design/ 、React 製の部品集）の見た目を、React を使わず CSS と少しの JS で再現した動き（2026-10-06、試作版のみ）
+- Magic UI（https://magicui.design/ 、React 製の部品集）の見た目を、React を使わず CSS と少しの JS で再現した動き（2026-10-06〜）
   - スタート：ヘッダーの点の模様（Dot Pattern）、「テクニカル」「ファンダメンタルズ」の色がゆっくり動く（Animated Gradient Text）、「診断をはじめる」に光が流れる（Shimmer Button）
   - 質問：枠は動かさず、文字だけを0.18秒で静かに切り替える（最初は Blur Fade にしたが「目がチカチカする」とのことで変更）
   - 結果：カードが順にふわっと出る（Blur Fade）、割合が50%ずつから結果へ分かれていく（Number Ticker。途中も合計100%）、紙吹雪（Confetti、2.4秒で消える）、一番上の講義カードのふちを光が回る（Border Beam）
@@ -32,8 +33,8 @@ GFS 公式キャラクター（かぶのキャラクター2体）を入れた**�
 
 ところまでを行います。
 
-- 公開URL: https://t-hirata-netizen.github.io/gfs-style-check/
-- ホスティング: GitHub Pages（`main` ブランチの `/`（root））。push すると1〜2分で反映されます
+- 公開URL: https://t-hirata-netizen.github.io/gfs-kabu-shindan/（旧 https://t-hirata-netizen.github.io/gfs-style-check/ からは自動で移る）
+- ホスティング: GitHub Pages（リポジトリ `gfs-kabu-shindan` の `main` ブランチの `/`（root）。このフォルダのブランチ `chara` を `git push kabu chara:main` で送る）。push すると1〜2分で反映されます
 - 想定ユーザー: 投資初心者。**スマホで開く人がほとんど**です
 
 ## 2. 現在の状態（v1）
@@ -41,7 +42,7 @@ GFS 公式キャラクター（かぶのキャラクター2体）を入れた**�
 - 画面は `index.html`（HTML/CSS/JS をインライン）、判定ロジックだけ `score.js` に分けています。ビルドなし・依存ライブラリなし
 - 判定ロジックの単体テストは `test/score.test.js`（`npm test` または `node --test`。Node 18 以上）
 - 外部から読み込んでいるのは Google Fonts（Dela Gothic One / Zen Kaku Gothic New）だけ
-- LINE などで URL を送ったときの画像：`og/default.png`（1200×630）。`og:image`・`og:url` は公開URL（`https://t-hirata-netizen.github.io/gfs-style-check/`）の絶対パス。**公開URLが変わったら直す**
+- LINE などで URL を送ったときの画像：`og/default.png`（1200×630）。`og:image`・`og:url` は公開URL（`https://t-hirata-netizen.github.io/gfs-kabu-shindan/`）の絶対パス。**公開URLが変わったら直す**
   - 画像のもとは `og/src/default.html`。文言やデザインを変えたら `sh tools/make-og.sh`（Mac の Google Chrome で PNG を作る）を実行し、PNG もコミットする
 - **「結果をシェア」機能は置かない**（2026-10 オーナー判断）。SNSに流れると GFS 生徒以外も使えるようになり、GFS の価値低下につながるおそれがあるため。同じ理由で `<meta name="robots" content="noindex, nofollow">` を入れ、検索結果に出さない（テストで確認している）
 - 途中経過は `localStorage`（キー: `gfs-style-test-v1`）に保存し、結果を出したら消します
@@ -107,7 +108,7 @@ GFS 公式キャラクター（かぶのキャラクター2体）を入れた**�
 | 軸ごとの解説文（寄り・どちらとも） | `const AXES=[` の `na` / `nb` / `nm` |
 | 解説の「はっきり／やや／どちらとも」の境目 | `score.js` の `axisLean()`（2割未満＝どちらとも、6割以上＝はっきり） |
 | 閉じるボタン（質問画面の×・結果画面の「閉じる」） | `function closeApp()`。画面を閉じるだけで、ほかのページには移らない（オーナーの希望）。ブラウザに止められたとき（スマホのブラウザや LINE の中のブラウザで多い）は、`#closeNote` に「画面の上の×や『完了』で閉じてください」と6秒出す。GFS の生徒ページへの案内が必要なら、別のボタンとして作る |
-| アクションリストに戻るボタン（試作版のみ） | `BACK_ALLOWED`・`backUrl()`・`#backCard`。`?from=list&back=戻り先` で開かれたときだけ結果画面に出し、戻り先の末尾に `#tech` / `#fund` を付けて結果を渡す。戻り先は `BACK_ALLOWED` の先頭が一致するURLだけ（今は claude.ai の Artifact。アクションリストを別の場所で公開したら追加する） |
+| アクションリストに戻るボタン | `BACK_ALLOWED`・`backUrl()`・`#backCard`。`?from=list&back=戻り先` で開かれたときだけ結果画面に出し、戻り先の末尾に `#tech` / `#fund` を付けて結果を渡す。戻り先は `BACK_ALLOWED` の先頭が一致するURLだけ（今は claude.ai の Artifact。アクションリストを別の場所で公開したら追加する） |
 | 匿名の集計（送り先・版） | `COLLECT_URL`・`APP_VERSION`・`function collect()`。送るデータは `score.js` の `buildRecord()` |
 
 - 講義に `url` を入れると、結果画面に「講義を見る →」ボタンが出ます（新しいタブで開く）。URL は gfs.tokyo のページ（生徒ログインが必要）
@@ -192,7 +193,7 @@ open index.html
 python3 -m http.server 8000   # → http://localhost:8000
 
 # 公開（main に push すれば GitHub Pages に自動反映）
-git add -A && git commit -m "…" && git push
+git add -A && git commit -m "…" && git push kabu chara:main
 ```
 
 公開前のチェック:
@@ -219,7 +220,7 @@ git add -A && git commit -m "…" && git push
 ## 匿名の集計
 
 - 送り先：Googleスプレッドシートに付けた Apps Script（`tools/collect.gs`）を「ウェブアプリ」として公開し、その URL を `index.html` の `COLLECT_URL` に入れる。空なら何も送らない
-- 送るのは本番の公開ページ（`https://t-hirata-netizen.github.io/gfs-style-check/`）からだけ。localhost やファイルで開いたとき、試作版など別のリポジトリ（`/gfs-kabu-shindan/` など）で開いたときは送らない（確認作業や試しの回答で集計を汚さないため）。**本番のリポジトリ名を変えたら `score.js` の `collectAllowed()` も直す**
+- 送るのは本番の公開ページ（`https://t-hirata-netizen.github.io/gfs-kabu-shindan/`）からだけ。localhost やファイルで開いたとき、ほかのリポジトリで開いたときは送らない（確認作業や試しの回答で集計を汚さないため）。**本番のリポジトリ名を変えたら `score.js` の `collectAllowed()` も直す**
 - 記録する列：日付（時刻は残さない）・版・タイプ・テクニカル%・ファンダ%・Q1〜Q22（-2,-1,1,2）。時刻・IPアドレス・端末情報は記録しない
   - 時刻を残さないのは、専任コンサルに届く「結果をコピー」の内容と時刻で突き合わせると、本人が分かるおそれがあるため
 - `COLLECT_URL` は公開リポジトリに載るので、誰でも送れてしまう。`collect.gs` の `isValid()` で形の崩れたデータは記録しない。それでも、いたずらで正しい形のデータを送られることは防げない
