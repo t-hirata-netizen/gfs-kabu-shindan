@@ -8,7 +8,7 @@
 ## 0. このブランチ（chara）について
 
 GFS 公式キャラクター（かぶのキャラクター2体）を入れた**試作版**。本番（main）とは別に、`~/gfs-style-check-chara` で作業している（git worktree）。
-**本番（`gfs-style-check` の main）には入れない。** 部署の人（リモートの人を含む）に見てもらうため、別のリポジトリ `gfs-style-check-preview` で公開する（2026-10-06 オーナー判断。URL：https://t-hirata-netizen.github.io/gfs-style-check-preview/ ）。キャラクター使用の社内確認はまだなので、検索結果に出さない設定（noindex）は外さない。
+**本番（`gfs-style-check` の main）には入れない。** 部署の人（リモートの人を含む）に見てもらうため、別のリポジトリ `gfs-kabu-shindan` で公開する（2026-10-06 オーナー判断。URL：https://t-hirata-netizen.github.io/gfs-kabu-shindan/ ）。キャラクター使用の社内確認はまだなので、検索結果に出さない設定（noindex）は外さない。
 - 公開のしかた：このフォルダで commit し、`git push preview chara:main`（`preview` は試作版リポジトリの送り先）
 - 試作版からは集計に送らない（`collectAllowed()` が本番のURLだけを許可している）。og:url・og:image は試作版のURL
 
@@ -219,7 +219,7 @@ git add -A && git commit -m "…" && git push
 ## 匿名の集計
 
 - 送り先：Googleスプレッドシートに付けた Apps Script（`tools/collect.gs`）を「ウェブアプリ」として公開し、その URL を `index.html` の `COLLECT_URL` に入れる。空なら何も送らない
-- 送るのは本番の公開ページ（`https://t-hirata-netizen.github.io/gfs-style-check/`）からだけ。localhost やファイルで開いたとき、試作版など別のリポジトリ（`/gfs-style-check-preview/` など）で開いたときは送らない（確認作業や試しの回答で集計を汚さないため）。**本番のリポジトリ名を変えたら `score.js` の `collectAllowed()` も直す**
+- 送るのは本番の公開ページ（`https://t-hirata-netizen.github.io/gfs-style-check/`）からだけ。localhost やファイルで開いたとき、試作版など別のリポジトリ（`/gfs-kabu-shindan/` など）で開いたときは送らない（確認作業や試しの回答で集計を汚さないため）。**本番のリポジトリ名を変えたら `score.js` の `collectAllowed()` も直す**
 - 記録する列：日付（時刻は残さない）・版・タイプ・テクニカル%・ファンダ%・Q1〜Q22（-2,-1,1,2）。時刻・IPアドレス・端末情報は記録しない
   - 時刻を残さないのは、専任コンサルに届く「結果をコピー」の内容と時刻で突き合わせると、本人が分かるおそれがあるため
 - `COLLECT_URL` は公開リポジトリに載るので、誰でも送れてしまう。`collect.gs` の `isValid()` で形の崩れたデータは記録しない。それでも、いたずらで正しい形のデータを送られることは防げない

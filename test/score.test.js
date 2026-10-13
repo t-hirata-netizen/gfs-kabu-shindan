@@ -236,7 +236,7 @@ test("軸の寄り具合：2割未満は「どちらとも」、6割以上は「
 });
 
 // ---- LINE などで URL を送ったときの画像 ----
-const BASE="https://t-hirata-netizen.github.io/gfs-style-check-preview/"; // 試作版のURL
+const BASE="https://t-hirata-netizen.github.io/gfs-kabu-shindan/"; // 試作版のURL
 const pngSize=f=>{const b=fs.readFileSync(f); assert.equal(b.toString("ascii",1,4),"PNG"); return [b.readUInt32BE(16),b.readUInt32BE(20)]};
 
 test("LINE などで URL を送ったときの画像（og/default.png）は 1200×630", ()=>{
@@ -295,7 +295,7 @@ test("集計は本番の公開ページだけで送り、手元の確認や試�
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/"),true);
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/index.html"),true);
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check"),true);
-  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check-preview/"),false); // 試作版
+  assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/"),false); // 試作版
   assert.equal(at("https:","someone-else.github.io","/gfs-style-check/"),false);
   assert.equal(at("http:","localhost","/"),false);
   assert.equal(at("file:","","/Users/x/index.html"),false);
