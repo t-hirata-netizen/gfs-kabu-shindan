@@ -1,7 +1,0 @@
-{
-  "name": "gfs-style-check",
-  "private": true,
-  "scripts": {
-    "test": "node --test"
-  }
-}
