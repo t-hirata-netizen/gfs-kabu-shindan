@@ -12,6 +12,11 @@
 - 旧本番 `https://t-hirata-netizen.github.io/gfs-style-check/`（リポジトリ `gfs-style-check` の main、`~/gfs-style-check`）は、開くと新しい本番へ移るだけのページ。URL の `?…` と `#…` も引き継ぐ
 - 集計は新しい本番の URL からだけ送る（`collectAllowed()`）。旧本番の localStorage（途中の回答・前回の結果）は同じ `t-hirata-netizen.github.io` の中なので、そのまま引き継がれる
 - キャラクター使用の社内確認：オーナーの判断で本番にした。指摘があれば、そのつど直す。検索結果に出さない設定（noindex）は残す
+- **GFS のサイトの中（https://gfs.tokyo/shindan/）でも公開する予定**（2026-10-13 オーナー：GFS のものだと分かる URL にしたい）。GFS のサイトの開発担当者に、どちらかを頼む
+  - 転送（おすすめ）：nginx で `/shindan/` を GitHub Pages（`https://t-hirata-netizen.github.io/gfs-kabu-shindan/`）へ転送。更新は今までどおり push だけ
+  - ファイルを置く：`python3 tools/build_gfs.py` で `~/my-project/gfs-shindan_日付.zip` を作って渡す（og:url・og:image を gfs.tokyo/shindan/ に書き換えて出力）。直すたびに渡し直す
+  - 集計は gfs.tokyo/shindan/ からも送る（`collectAllowed()`）。gfs.tokyo で開いたときの localStorage（前回の結果など）は github.io とは別になる
+  - 公開できたら：og:url・og:image を gfs.tokyo/shindan/ に、旧本番（gfs-style-check）の移り先とアクションリストのリンクも gfs.tokyo/shindan/ に直す
 
 - 画像：`img/kabu-tech.webp`（黒いリュック）・`img/kabu-fund.webp`（赤いランドセル）。360px・各約21KB、背景透明。共有画像用の大きめの PNG は `og/src/kabu-*.png`
 - 入れた場所：スタート画面のヘッダー右上（2体）／質問画面の進捗バーの上を2体が歩く／結果画面のタイプ名の上（タイプごとに1体）／LINE などで URL を送ったときの画像（`og/default.png`）

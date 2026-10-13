@@ -102,10 +102,14 @@
     return {v:String(v), type:r.key, pa:r.pa, pb:r.pb, ans:ans.slice()};
   }
 
-  // 集計に送ってよい場所か。本番の公開ページ（https://t-hirata-netizen.github.io/gfs-kabu-shindan/）だけ送る
-  // 手元での確認（localhost・ファイル）や、ほかのリポジトリでは送らない。旧本番の /gfs-style-check/ は新しい本番へ移るだけのページ
+  // 集計に送ってよい場所か。本番の公開ページだけ送る：
+  //   https://gfs.tokyo/shindan/（GFSのサイトの中。2026-10 オーナーの希望で移す）
+  //   https://t-hirata-netizen.github.io/gfs-kabu-shindan/（GitHub Pages。gfs.tokyo/shindan/ の元にもなる）
+  // 手元での確認（localhost・ファイル）や、ほかのURLでは送らない。旧本番の /gfs-style-check/ は新しい本番へ移るだけのページ
   function collectAllowed(loc){
-    return loc.protocol==="https:" && loc.hostname==="t-hirata-netizen.github.io" && /^\/gfs-kabu-shindan(\/|$)/.test(loc.pathname);
+    if(loc.protocol!=="https:")return false;
+    if(loc.hostname==="gfs.tokyo")return /^\/shindan(\/|$)/.test(loc.pathname);
+    return loc.hostname==="t-hirata-netizen.github.io" && /^\/gfs-kabu-shindan(\/|$)/.test(loc.pathname);
   }
 
   const api={score,pickCourses,pickLives,axisLean,buildRecord,collectAllowed};

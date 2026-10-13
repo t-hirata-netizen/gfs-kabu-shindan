@@ -295,6 +295,11 @@ test("集計は本番（gfs-kabu-shindan）の公開ページだけで送り、�
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/"),true);
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan/index.html"),true);
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan"),true);
+  assert.equal(at("https:","gfs.tokyo","/shindan/"),true);                 // GFSのサイトの中
+  assert.equal(at("https:","gfs.tokyo","/shindan/index.html"),true);
+  assert.equal(at("https:","gfs.tokyo","/"),false);                        // GFSのサイトのほかのページ
+  assert.equal(at("https:","gfs.tokyo","/shindan-test/"),false);
+  assert.equal(at("http:","gfs.tokyo","/shindan/"),false);
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-style-check/"),false);       // 旧本番（新しい本番へ移るだけ）
   assert.equal(at("https:","t-hirata-netizen.github.io","/gfs-kabu-shindan-test/"),false);
   assert.equal(at("https:","someone-else.github.io","/gfs-kabu-shindan/"),false);
